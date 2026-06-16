@@ -1,5 +1,7 @@
 # Images API
 
+[![CI](https://github.com/arczi-szczigi/nodejs-task-images-api/actions/workflows/ci.yml/badge.svg)](https://github.com/arczi-szczigi/nodejs-task-images-api/actions/workflows/ci.yml)
+
 A REST API for uploading and serving images, built for the **FutureMind NodeJS recruitment task**.
 
 Upload an image (optionally resized), store it, and fetch it back by id — with title
@@ -35,6 +37,25 @@ npm install
 docker compose up -d db
 npm run start:dev
 ```
+
+The schema is created by **migrations that run automatically on startup**
+(`migrationsRun`), so the database is ready without any manual step.
+
+---
+
+## Database migrations
+
+The schema is owned by TypeORM migrations (not `synchronize`). They run
+automatically when the app boots, and can also be driven manually:
+
+```bash
+npm run migration:run       # apply pending migrations
+npm run migration:revert    # roll back the last migration
+npm run migration:generate ./src/migrations/<Name>   # generate from entity changes
+```
+
+`synchronize` is disabled by default — migrations are the single source of truth
+for schema changes, which is safe for production and keeps changes reviewable.
 
 ---
 
@@ -203,12 +224,17 @@ npm run test:cov    # unit tests + coverage report
 npm run test:e2e    # end-to-end (needs the DB: docker compose up -d db)
 ```
 
-- **Unit** — image processing (real `sharp`), magic-byte validation pipe
-  (incl. spoofed/`.php` and disallowed-type uploads), and the service with
-  mocked repository/storage (incl. file rollback on DB failure).
-- **E2E** (Supertest, real HTTP + PostgreSQL) — all endpoints, happy paths and
-  error paths: bad file → 422, missing/invalid fields → 400, missing → 404,
-  malformed id → 400, title filter, pagination.
+- **Unit** — image processing (real `sharp`, 100% covered), magic-byte
+  validation pipe (incl. spoofed/`.php` and disallowed-type uploads), and the
+  service with mocked repository/storage (~87% covered, incl. file rollback on
+  DB failure). The core domain logic is the focus of unit coverage.
+- **E2E** (Supertest, real HTTP + PostgreSQL) — exercises the full stack
+  (controllers, validation, storage, error filter) across all endpoints, happy
+  paths and error paths: bad file → 422, missing/invalid fields → 400,
+  missing → 404, malformed id → 400, title filter, pagination.
+
+CI (GitHub Actions) runs build + unit + e2e against a PostgreSQL service on
+every push and pull request.
 
 ---
 
@@ -237,8 +263,11 @@ src/
 │   └── pipes/              # magic-byte image validation
 ├── storage/                # StorageService contract + Local implementation
 ├── images/                 # controller, service, entity, DTOs, processor
-└── health/                 # liveness probe
+├── migrations/             # TypeORM migrations (schema source of truth)
+├── data-source.ts          # DataSource for the migration CLI
+└── health/                 # readiness probe (pings the DB)
 test/                       # e2e (Supertest)
+.github/workflows/ci.yml    # build + unit + e2e on push/PR
 ```
 
 ## License

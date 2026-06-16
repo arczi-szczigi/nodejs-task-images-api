@@ -40,6 +40,6 @@ export default (): AppConfig => ({
     username: process.env.DB_USERNAME ?? 'postgres',
     password: process.env.DB_PASSWORD ?? 'postgres',
     name: process.env.DB_NAME ?? 'images',
-    synchronize: (process.env.DB_SYNCHRONIZE ?? 'true') === 'true',
+    synchronize: (process.env.DB_SYNCHRONIZE ?? 'false') === 'true',
   },
 });

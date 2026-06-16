@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { join } from 'path';
 import configuration, { AppConfig } from './config/configuration';
 import { HealthController } from './health/health.controller';
 import { Image } from './images/entities/image.entity';
@@ -36,6 +37,10 @@ import { StorageModule } from './storage/storage.module';
         password: config.get('db.password', { infer: true }),
         database: config.get('db.name', { infer: true }),
         entities: [Image],
+        // Schema is owned by migrations; they run automatically on startup.
+        // Glob covers both compiled (dist/*.js) and ts-jest (src/*.ts) runs.
+        migrations: [join(__dirname, 'migrations', '*.{js,ts}')],
+        migrationsRun: true,
         synchronize: config.get('db.synchronize', { infer: true }),
         autoLoadEntities: true,
       }),

@@ -6,7 +6,7 @@
 *.tsbuildinfo
 
 # tests / coverage
-/coverage
+coverage/
 
 # env — NEVER commit real secrets
 .env
